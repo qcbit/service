@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/qcbit/webServices/app/foundation/logger"
+	"github.com/qcbit/services/foundation/logger"
 	"go.uber.org/zap"
 )
 

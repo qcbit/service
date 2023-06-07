@@ -14,10 +14,6 @@ ARG BUILD_REF
 # Copy the source code into the container.
 COPY . /service
 
-# Build the admin binary.
-WORKDIR /service/app/tooling/sales-admin
-RUN go build -ldflags "-X main.build=${BUILD_REF}"
-
 # Build the service binary.
 WORKDIR /service/app/services/sales-api
 RUN go build -ldflags "-X main.build=${BUILD_REF}"

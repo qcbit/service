@@ -1,4 +1,4 @@
-module github.com/qcbit/webServices
+module github.com/qcbit/services
 
 go 1.19
 

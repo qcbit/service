@@ -7,6 +7,14 @@ SHELL := /bin/bash
 KIND            := kindest/node:v1.27.2
 KIND_CLUSTER    := starter-cluster
 
+APP             := sales
+NAMESPACE       := sales-system
+BASE_IMAGE_NAME := qcbit/service
+SERVICE_NAME    := sales-api
+# VERSION         := 0.0.1
+VERSION         := 1.0
+SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
+
 run:
 	go run app/services/sales-api/main.go
 
@@ -44,3 +52,28 @@ dev-status:
 	kubectl get nodes -o wide
 	kubectl get svc -o wide
 	kubectl get pods -o wide --watch --all-namespaces
+
+dev-load:
+	kind load docker-image $(SERVICE_NAME):$(VERSION) --name $(KIND_CLUSTER)
+#	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
+
+dev-apply:
+	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --for=condition=Ready
+
+dev-restart:
+	kubectl rollout restart deployment $(APP) --namespace=$(NAMESPACE)
+
+dev-logs:
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) --all-containers=true -f --tail=100 --max-log-requests=6 
+#	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) --all-containers=true -f --tail=100 --max-log-requests=6 | go run app/tooling/logfmt/main.go -service=$(SERVICE_NAME)
+
+dev-describe:
+	kubectl describe nodes
+	kubectl describe svc
+
+dev-describe-deployment:
+	kubectl describe deployment --namespace=$(NAMESPACE) $(APP)
+
+dev-describe-sales:
+	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)

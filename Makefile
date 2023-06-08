@@ -77,3 +77,7 @@ dev-describe-deployment:
 
 dev-describe-sales:
 	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)
+
+dev-update: all dev-load dev-restart
+
+dev-update-apply: all dev-load dev-apply

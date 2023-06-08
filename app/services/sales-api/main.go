@@ -9,6 +9,7 @@ import (
 
 	"github.com/qcbit/services/foundation/logger"
 	"go.uber.org/zap"
+	"go.uber.org/automaxprocs/maxprocs"
 )
 
 var build = "develop"
@@ -30,6 +31,9 @@ func main() {
 
 func run(log *zap.SugaredLogger) error {
 
+	if _, err := maxprocs.Set(maxprocs.Logger(log.Infof)); err != nil {
+		return fmt.Errorf("maxprocs: %w", err)
+	}
 	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
 	defer log.Infow("shutdown")
 

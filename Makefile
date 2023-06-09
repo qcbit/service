@@ -16,6 +16,9 @@ VERSION         := 1.0
 SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
 
 run:
+	go run app/services/sales-api/main.go
+
+run-help:
 	go run app/services/sales-api/main.go --help
 
 tidy:

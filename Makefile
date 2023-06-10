@@ -1,6 +1,9 @@
 SHELL := /bin/bash
 
 # 	For full Kind v0.19 release notes: https://github.com/kubernetes-sigs/kind/releases/tag/v0.19.0
+#
+# Other commands to install.
+# go install github.com/divan/expvarmon@latest
 
 # ==============================================================================
 # Define dependencies
@@ -24,6 +27,13 @@ run-help:
 tidy:
 	go mod tidy
 	go mod vendor
+
+metrics-local:
+	expvarmon -ports=":4000" -endpoint="/metrics" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+
+metrics-view:
+	expvarmon -ports="$(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:3001" -endpoint="/metrics" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+
 
 # ====================
 # Building containers

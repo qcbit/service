@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,8 +12,8 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf/v3"
-	"github.com/qcbit/services/foundation/logger"
 	"github.com/qcbit/services/business/web/v1/debug"
+	"github.com/qcbit/services/foundation/logger"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -78,7 +79,7 @@ func run(log *zap.SugaredLogger) error {
 	log.Infow("starting service", "version", build)
 	defer log.Infow("shutdown complete")
 
-	out, err :=conf.String(&cfg)
+	out, err := conf.String(&cfg)
 	if err != nil {
 		return fmt.Errorf("generating config for output: %w", err)
 	}
@@ -95,9 +96,49 @@ func run(log *zap.SugaredLogger) error {
 		}
 	}()
 
+	// ====================
+	// Start API Service
+
+	log.Infow("startup", "status", "initializing V1 API support")
+
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-	<-shutdown
+
+	api := http.Server{
+		Addr:         cfg.Web.APIHost,
+		Handler:      nil,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
+		IdleTimeout:  cfg.Web.IdleTimeout,
+		ErrorLog:     zap.NewStdLog(log.Desugar()),
+	}
+
+	serverErrors := make(chan error, 1)
+
+	go func() {
+		log.Infow("startup", "status", "api router started", "host", api.Addr)
+		serverErrors <- api.ListenAndServe()
+	}()
+
+	// ===========
+	// Shutdown
+
+	select {
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+
+	case sig := <-shutdown:
+		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Infow("shtudown", "status", "shutdown complete", "signal", sig)
+
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancel()
+
+		if err := api.Shutdown(ctx); err != nil {
+			api.Close()
+			return fmt.Errorf("could not stop server gracefully: %w", err)
+		}
+	}
 
 	return nil
 }

@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # go install github.com/divan/expvarmon@latest
 #
 # http://sales-service.sales-system.svc.cluster.local:4000/debug/pprof
-# curl -il sales-service.sales-system.svc.cluster.local:4000/debug/vars
+# curl -il sales-service.sales-system.svc.cluster.local:4000/debug/vars/
 
 # ==============================================================================
 # Define dependencies
@@ -28,6 +28,19 @@ SERVICE_NAME    := sales-api
 # VERSION         := 0.0.1
 VERSION         := 1.0
 SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
+
+# ======================
+# Install dependencies
+dev-docker:
+	docker pull $(GOLANG)
+	docker pull $(ALPINE)
+	docker pull $(KIND)
+	docker pull $(POSTGRES)
+	docker pull $(VAULT)
+	docker pull $(GRAFANA)
+	docker pull $(PROMETHEUS)
+	docker pull $(TEMPO)
+	docker pull $(TELEPRESENCE)
 
 run:
 	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
@@ -62,7 +75,7 @@ sales:
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
-dev-up-local:
+dev-up:
 	kind create cluster \
 		--image $(KIND) \
 		--name $(KIND_CLUSTER) \
@@ -70,12 +83,9 @@ dev-up-local:
 
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
-dev-tel:
 	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
 	telepresence --context=kind-$(KIND_CLUSTER) helm install
 	telepresence --context=kind-$(KIND_CLUSTER) connect
-
-dev-up: dev-up-local
 
 dev-down:
 	telepresence quit -s

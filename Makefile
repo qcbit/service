@@ -4,11 +4,22 @@ SHELL := /bin/bash
 #
 # Other commands to install.
 # go install github.com/divan/expvarmon@latest
+#
+# http://sales-service.sales-system.svc.cluster.local:4000/debug/pprof
+# curl -il sales-service.sales-system.svc.cluster.local:4000/debug/vars
 
 # ==============================================================================
 # Define dependencies
 KIND            := kindest/node:v1.27.2
 KIND_CLUSTER    := starter-cluster
+GOLANG          := golang:1.20
+ALPINE          := alpine:3.18
+POSTGRES        := postgres:15.3
+VAULT           := hashicorp/vault:1.13
+GRAFANA         := grafana/grafana:9.5.2
+PROMETHEUS      := prom/prometheus:v2.44.0
+TEMPO           := grafana/tempo:2.1.1
+TELEPRESENCE    := datawire/tel2:2.13.3
 
 APP             := sales
 NAMESPACE       := sales-system
@@ -59,7 +70,16 @@ dev-up-local:
 
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
+dev-tel:
+	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
+	telepresence --context=kind-$(KIND_CLUSTER) helm install
+	telepresence --context=kind-$(KIND_CLUSTER) connect
+
 dev-up: dev-up-local
+
+dev-down:
+	telepresence quit -s
+	kind delete cluster --name $(KIND_CLUSTER)
 
 dev-status:
 	kubectl get nodes -o wide
@@ -72,7 +92,7 @@ dev-load:
 
 dev-apply:
 	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
-	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --for=condition=Ready
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --for=condition=Available
 
 dev-restart:
 	kubectl rollout restart deployment $(APP) --namespace=$(NAMESPACE)

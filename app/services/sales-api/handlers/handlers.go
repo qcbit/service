@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dimfeld/httptreemux/v5"
 	"github.com/qcbit/services/app/services/sales-api/handlers/v1/testgrp"
 	"github.com/qcbit/services/foundation/web"
 	"go.uber.org/zap"
@@ -21,7 +20,7 @@ type APIMuxConfig struct {
 func APIMux(cfg APIMuxConfig) *web.App {
 	app := web.NewApp(cfg.Shutdown)
 
-	app.Handle(http.MethodGet, "/test", testgrp.Status)
+	app.Handle(http.MethodGet, "/status", testgrp.Status)
 
 	return app
 }

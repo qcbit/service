@@ -13,5 +13,5 @@ func Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	}{
 		Status: "OK",
 	}
-	json.NewEncoder(w).Encode(status)
+	return json.NewEncoder(w).Encode(status)
 }

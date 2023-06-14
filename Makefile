@@ -78,6 +78,9 @@ sales:
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
+connect-tel:
+	telepresence --context=kind-$(KIND_CLUSTER) connect
+
 dev-up:
 	kind create cluster \
 		--image $(KIND) \
@@ -88,7 +91,7 @@ dev-up:
 
 	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
 	telepresence --context=kind-$(KIND_CLUSTER) helm install
-	telepresence --context=kind-$(KIND_CLUSTER) connect
+	connect-tel
 
 dev-down:
 	telepresence quit -s
@@ -105,7 +108,7 @@ dev-load:
 
 dev-apply:
 	kustomize build zarf/k8s/dev/sales | kubectl apply -f -
-	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --for=condition=Available
+	kubectl wait pods --namespace=$(NAMESPACE) --selector app=$(APP) --for=condition=Ready
 
 dev-restart:
 	kubectl rollout restart deployment $(APP) --namespace=$(NAMESPACE)

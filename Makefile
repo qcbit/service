@@ -45,6 +45,18 @@ dev-docker:
 	docker pull $(TEMPO)
 	docker pull $(TELEPRESENCE)
 
+# ===============
+# Go Tooling
+dev-gotooling:
+	go install github.com/divan/expvarmon@latest
+	go install github.com/rakyll/hey@latest
+
+test-load-local:
+	hey -m GET -c 100 -n 10000 http://localhost:3000/status
+
+test-load:
+	hey -m GET -c 100 -n 10000 http://sales-service.sales-system.svc.cluster.local:3000/status
+
 run:
 	go run app/services/sales-api/main.go | go run app/tooling/logfmt/main.go
 
@@ -59,7 +71,7 @@ metrics-local:
 	expvarmon -ports=":4000" -endpoint="/metrics" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
 metrics-view:
-	expvarmon -ports="$(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:3001" -endpoint="/metrics" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+	expvarmon -ports="sales-service.$(NAMESPACE).svc.cluster.local:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
 
 # ====================

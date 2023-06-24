@@ -11,6 +11,14 @@ SHELL := /bin/bash
 status:
 	curl -il sales-service.sales-system.svc.cluster.local:3000/status
 
+# RSA Keys
+# To generate private/public key PEM file.
+# $ openssl genpkey -algorithm rsa -out private.pem -pkeyopt rsa_keygen_bits:2048
+# $ openssl rsa -pubout -in private.pem -out public.pem
+
+jwt:
+	go run app/scratch/jwt/main.go
+
 # ==============================================================================
 # Define dependencies
 KIND            := kindest/node:v1.27.2

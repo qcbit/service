@@ -24,31 +24,31 @@ func run() error {
 	}
 
 	// Create a file for the private key information in PEM form
-	privFile, err := os.Create("private.pem")
-	if err != nil {
-		return fmt.Errorf("creating private file: %w", err)
-	}
-	defer privFile.Close()
+	// privFile, err := os.Create("private.pem")
+	// if err != nil {
+	// 	return fmt.Errorf("creating private file: %w", err)
+	// }
+	// defer privFile.Close()
 
 	// Construct a PEM block for the private key.
-	privBlock := pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privkey),
-	}
+	// privBlock := pem.Block{
+	// 	Type:  "PRIVATE KEY",
+	// 	Bytes: x509.MarshalPKCS1PrivateKey(privkey),
+	// }
 
 	// Write the private key to the private key file.
-	if err := pem.Encode(privFile, &privBlock); err != nil {
-		return fmt.Errorf("encoding to private file: %w", err)
-	}
+	// if err := pem.Encode(privFile, &privBlock); err != nil {
+	// 	return fmt.Errorf("encoding to private file: %w", err)
+	// }
 
 	// =============================
 
 	// Create a file for the public key information in PEM form.
-	pubFile, err := os.Create("public.pem")
-	if err != nil {
-		return fmt.Errorf("creating public file: %w", err)
-	}
-	defer pubFile.Close()
+	// pubFile, err := os.Create("public.pem")
+	// if err != nil {
+	// 	return fmt.Errorf("creating public file: %w", err)
+	// }
+	// defer pubFile.Close()
 
 	// Marshal the public key from the private key to PKIX.
 	asn1Bytes, err := x509.MarshalPKIXPublicKey(&privkey.PublicKey)
@@ -62,12 +62,14 @@ func run() error {
 		Bytes: asn1Bytes,
 	}
 
+	fmt.Print("=====================================\n\n")
+
 	// Write the public key to the public key file.
-	if err := pem.Encode(pubFile, &pubBlock); err != nil {
+	if err := pem.Encode(os.Stdout, &pubBlock); err != nil {
 		return fmt.Errorf("encoding to public file: %w", err)
 	}
 
-	fmt.Println("private and pubic key files generated")
+	fmt.Print("\n=====================================\n\n")
 
 	return nil
 }

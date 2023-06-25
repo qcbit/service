@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func main() {
@@ -41,8 +44,6 @@ func run() error {
 	// 	return fmt.Errorf("encoding to private file: %w", err)
 	// }
 
-	// =============================
-
 	// Create a file for the public key information in PEM form.
 	// pubFile, err := os.Create("public.pem")
 	// if err != nil {
@@ -71,5 +72,31 @@ func run() error {
 
 	fmt.Print("\n=====================================\n\n")
 
+	// =============================
+
+	claims := struct {
+		jwt.RegisteredClaims
+		Roles []string
+	}{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "123456789",
+			Issuer:    "service project",
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(8760 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		},
+		Roles: []string{"ADMIN"},
+	}
+
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), claims)
+	token.Header["kid"] = "kid1"
+
+	str, err := token.SignedString(privkey)
+	if err != nil {
+		return fmt.Errorf("signing token: %w", err)
+	}
+
+	fmt.Println(str)
+
+	// fmt.Printf("-----BEGIN TOKEN-----\n%s\n-----END TOKEN-----\n", token)
 	return nil
 }

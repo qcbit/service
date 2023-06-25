@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +21,9 @@ func main() {
 }
 
 func run() error {
+	// ===================================
+	// Generate the Private/Public RSA key
+
 	// Generate a new private key.
 	privkey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -72,7 +76,8 @@ func run() error {
 
 	fmt.Print("\n=====================================\n\n")
 
-	// =============================
+	// ===========================
+	// Generate JWT with Signature
 
 	claims := struct {
 		jwt.RegisteredClaims
@@ -90,13 +95,39 @@ func run() error {
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("RS256"), claims)
 	token.Header["kid"] = "kid1"
 
-	str, err := token.SignedString(privkey)
+	TokenStr, err := token.SignedString(privkey)
 	if err != nil {
 		return fmt.Errorf("signing token: %w", err)
 	}
 
-	fmt.Println(str)
+	fmt.Println(TokenStr)
 
+	fmt.Print("\n=====================================\n\n")
+
+	// ============================
+	// Validate JWT with Public Key
+
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{"RS256"}))
+
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
+		switch token.Header["kid"] {
+		case "kid1":
+			return &privkey.PublicKey, nil
+		default:
+			return nil, errors.New("unknown key")
+		}
+	}
+
+	var claimstruct struct {
+		jwt.RegisteredClaims
+		Roles []string
+	}
+	if _, err = parser.ParseWithClaims(TokenStr, &claimstruct, keyFunc); err != nil {
+		return fmt.Errorf("parse with claims: %w", err)
+	}
+
+	fmt.Print("signature validation\n\n")
+	fmt.Printf("%#v", claimstruct)
 	// fmt.Printf("-----BEGIN TOKEN-----\n%s\n-----END TOKEN-----\n", token)
 	return nil
 }

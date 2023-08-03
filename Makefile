@@ -15,7 +15,7 @@ KIND            := kindest/node:v1.27.1
 POSTGRES        := postgres:15.3
 VAULT           := hashicorp/vault:1.13
 ZIPKIN          := openzipkin/zipkin:2.24
-TELEPRESENCE    := datawire/tel2:2.13.2
+TELEPRESENCE    := datawire/tel2:2.14.1
 
 KIND_CLUSTER    := qcbit-starter-cluster
 NAMESPACE       := sales-system
@@ -27,6 +27,40 @@ SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
 METRICS_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME)-metrics:$(VERSION)
 
 # VERSION       := "0.0.1-$(shell git rev-parse --short HEAD)"
+
+# ==============================================================================
+# Install dependencies
+
+dev-gotooling:
+	go install github.com/divan/expvarmon@latest
+	go install github.com/rakyll/hey@latest
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+
+dev-brew-common:
+	brew update
+	brew tap hashicorp/tap
+	brew list kind || brew install kind
+	brew list kubectl || brew install kubectl
+	brew list kustomize || brew install kustomize
+	brew list pgcli || brew install pgcli
+	brew list vault || brew install vault
+
+dev-brew: dev-brew-common
+	brew list datawire/blackbird/telepresence || brew install datawire/blackbird/telepresence
+
+dev-brew-arm64: dev-brew-common
+	brew list datawire/blackbird/telepresence-arm64 || brew install datawire/blackbird/telepresence-arm64
+
+dev-docker:
+	docker pull $(GOLANG)
+	docker pull $(ALPINE)
+	docker pull $(KIND)
+	docker pull $(POSTGRES)
+	docker pull $(VAULT)
+	docker pull $(ZIPKIN)
+	docker pull $(TELEPRESENCE)
 
 # ==============================================================================
 # Building containers
@@ -44,6 +78,11 @@ service:
 # ==============================================================================
 # Running from within k8s/kind
 
+dev-tel:
+	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
+	telepresence --context=kind-$(KIND_CLUSTER) helm install --upgrade
+	telepresence --context=kind-$(KIND_CLUSTER) connect
+
 dev-up-local:
 	kind create cluster \
 		--image $(KIND) \
@@ -52,12 +91,17 @@ dev-up-local:
 
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 
+	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
+
 dev-up: dev-up-local
+	telepresence --context=kind-$(KIND_CLUSTER) helm install
+	telepresence --context=kind-$(KIND_CLUSTER) connect
 
 dev-down-local:
 	kind delete cluster --name $(KIND_CLUSTER)
 
 dev-down:
+	telepresence quit -s
 	kind delete cluster --name $(KIND_CLUSTER)
 
 dev-load:
@@ -104,5 +148,14 @@ tidy:
 	go mod tidy
 	go mod vendor
 
+metrics-view:
+	expvarmon -ports="$(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+
 metrics-view-local-sc:
 	expvarmon -ports="localhost:4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
+
+test-endpoint:
+	curl -il $(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:4000/debug/pprof
+
+test-endpoint-vars:
+	curl -il $(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:4000/debug/vars

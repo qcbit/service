@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/qcbit/service/business/web/v1/mid"
-	"github.com/qcbit/service/foundation/logger/web"
+	"github.com/qcbit/service/foundation/web"
 	"go.uber.org/zap"
 
 	"github.com/qcbit/service/app/services/sales-api/handlers/v1/testgrp"

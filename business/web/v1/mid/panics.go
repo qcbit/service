@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 
 	"github.com/qcbit/service/foundation/web"
+
+	"github.com/qcbit/service/business/web/metrics"
 )
 
 // Panics recovers from panics and converts the panic to an error so it is
@@ -21,6 +23,7 @@ func Panics() web.Middleware {
 				if rec := recover(); rec != nil {
 					trace := debug.Stack()
 					err = fmt.Errorf("PANIC [%v] TRACE[%s]", rec, string(trace))
+					metrics.AddPanics(ctx)
 				}
 			}()
 

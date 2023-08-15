@@ -12,6 +12,11 @@ SHELL = $(if $(wildcard $(SHELL_PATH)),/bin/ash,/bin/bash)
 # 	$ openssl rsa -pubout -in private.pem -out public.pem
 # 	$ ./sales-admin genkey
 #
+# OPA Playground
+# 	https://play.openpolicyagent.org/
+# 	https://academy.styra.com/
+# 	https://www.openpolicyagent.org/docs/latest/policy-reference/
+
 # ==============================================================================
 # Define dependencies
 

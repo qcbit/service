@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	_ "embed"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -11,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/open-policy-agent/opa/rego"
 )
 
 func main() {
@@ -106,6 +110,20 @@ func genToken() error {
 	}
 
 	fmt.Println("TOKEN VALIDATED SUCCESSFULLY")
+
+	// ----------------------------------------------------------
+
+	var b bytes.Buffer
+	if err := pem.Encode(&b, &publicBlock); err != nil {
+		return fmt.Errorf("encoding public key: %w", err)
+	}
+
+	ctx := context.Background()
+	if err := opaPolicyEvaluationAuthen(ctx, b.String(), str, clm.Issuer); err != nil {
+		return fmt.Errorf("opa authentication failed: %w", err)
+	}
+
+	fmt.Println("OPA AUTHENTICATION SUCCESSFUL")
 	fmt.Printf("%#v\n", clm)
 
 	return nil
@@ -165,4 +183,46 @@ func genKey() error {
 	fmt.Println("Keys generated successfully.")
 
 	return nil
+}
+
+// Core OPA policies.
+var (
+	//go:embed rego/authentication.rego
+	opaAuthentication string
+)
+
+func opaPolicyEvaluationAuthen(ctx context.Context, pem string, tokenString string, issuer string) error {
+	const rule = "auth"
+	const opaPackage string = "qcbit.rego"
+	query := fmt.Sprintf("x = data.%s.%s", opaPackage, rule)
+
+	q, err := rego.New(
+		rego.Query(query),
+		rego.Module("policy.rego", opaAuthentication),
+	).PrepareForEval(ctx)
+	if err != nil {
+		return err
+	}
+
+	input := map[string]any{
+		"Key":   pem,
+		"Token": tokenString,
+		"ISS":   issuer,
+	}
+
+	results, err := q.Eval(ctx, rego.EvalInput(input))
+	if err != nil {
+		return fmt.Errorf("query: %w", err)
+	}
+
+	if len(results) == 0 {
+		return fmt.Errorf("no results")
+	}
+
+	result, ok := results[0].Bindings["x"].(bool)
+	if !ok || !result {
+		return fmt.Errorf("bindings results[%v] ok[%v]", result, ok)
+	}
+
+	return err
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/qcbit/service/foundation/web"
 	"go.uber.org/zap"
 
+	"github.com/qcbit/service/business/web/auth"
 	v1 "github.com/qcbit/service/business/web/v1"
 )
 
@@ -29,6 +30,12 @@ func Errors(log *zap.SugaredLogger) web.Middleware {
 						Error: reqErr.Error(),
 					}
 					status = reqErr.Status
+
+				case auth.IsAuthError(err):
+					er = v1.ErrorResponse{
+						Error: http.StatusText(http.StatusUnauthorized),
+					}
+					status = http.StatusUnauthorized
 
 				default:
 					er = v1.ErrorResponse{

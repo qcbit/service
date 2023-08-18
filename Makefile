@@ -176,3 +176,9 @@ test-endpoint-vars:
 
 test-endpoint-local:
 	curl -il localhost:3000/test
+
+test-endpoint-auth:
+	curl -il -H "Authorization: Bearer ${TOKEN}" $(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:3000/test/auth
+
+test-endpoint-auth-local:
+	curl -il -H "Authorization: Bearer ${TOKEN}" localhost:3000/test/auth

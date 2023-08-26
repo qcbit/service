@@ -1,6 +1,6 @@
 package user
 
-import "github.com/qcbit/service/business/core/data/order"
+import "github.com/qcbit/service/business/data/order"
 
 // DefaultOrderBy represents the default way we sort.
 var DefaultOrderBy = order.NewBy(OrderByID, order.ASC)

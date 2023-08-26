@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/qcbit/service/business/core/data/order"
+	"github.com/qcbit/service/business/data/order"
 )
 
 // Set of error variables for CRUD operations.

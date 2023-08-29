@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/qcbit/service/business/web/auth"
 	"github.com/qcbit/service/business/web/v1/mid"
 	"github.com/qcbit/service/foundation/web"
@@ -18,6 +19,7 @@ type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
 	Auth     *auth.Auth
+	DB       *sqlx.DB
 }
 
 // APIMux constructs a http.Handler with all application routes defined.

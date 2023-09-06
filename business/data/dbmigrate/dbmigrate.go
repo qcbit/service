@@ -11,8 +11,8 @@ import (
 	"github.com/ardanlabs/darwin/v3"
 	"github.com/ardanlabs/darwin/v3/dialects/postgres"
 	"github.com/ardanlabs/darwin/v3/drivers/generic"
-	database "github.com/qcbit/service/business/sys/database/pgx"
 	"github.com/jmoiron/sqlx"
+	database "github.com/qcbit/service/business/sys/database/pgx"
 )
 
 var (
@@ -61,7 +61,7 @@ func Seed(ctx context.Context, db *sqlx.DB) (err error) {
 		}
 	}()
 
-	if  _, err := tx.Exec(seedDoc); err != nil {
+	if _, err := tx.Exec(seedDoc); err != nil {
 		return fmt.Errorf("exec: %w", err)
 	}
 

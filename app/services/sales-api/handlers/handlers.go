@@ -6,6 +6,9 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/qcbit/service/app/services/sales-api/handlers/v1/usergrp"
+	"github.com/qcbit/service/business/core/user"
+	"github.com/qcbit/service/business/core/user/stores/userdb"
 	"github.com/qcbit/service/business/web/auth"
 	"github.com/qcbit/service/business/web/v1/mid"
 	"github.com/qcbit/service/foundation/web"
@@ -28,6 +31,14 @@ func APIMux(cfg APIMuxConfig) *web.App {
 
 	app.Handle(http.MethodGet, "/test", testgrp.Test)
 	app.Handle(http.MethodGet, "/test/auth", testgrp.Test, mid.Authenticate(cfg.Auth), mid.Authorize(cfg.Auth, auth.RuleAdminOnly))
+
+	// -----------------------------------------------------------------
+
+	usrcore := user.NewCore(userdb.NewStore(cfg.Log, cfg.DB))
+
+	ugh := usergrp.New(usrcore)
+
+	app.Handle(http.MethodGet, "/users", ugh.Query)
 
 	return app
 }

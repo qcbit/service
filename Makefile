@@ -207,3 +207,6 @@ pgcli-local:
 
 pgcli:
 	pgcli postgresql://postgres:postgres@database-service.$(NAMESPACE).svc.cluster.local
+
+query:
+	curl -il http://$(SERVICE_NAME).$(NAMESPACE).svc.cluster.local:3000/users?page=1&rows=2

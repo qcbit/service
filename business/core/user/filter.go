@@ -13,7 +13,7 @@ type QueryFilter struct {
 	Name             *string       `validate:"omitempty,min=3"`
 	Email            *mail.Address `validate:"omitempty"`
 	StartCreatedDate *time.Time    `validate:"omitempty"`
-	EndCreateDate    *time.Time    `validate:"omitempty"`
+	EndCreatedDate    *time.Time    `validate:"omitempty"`
 }
 
 // Validate checks the data in the model is considered clean.
@@ -48,5 +48,5 @@ func (qf *QueryFilter) WithStartDateCreated(startDate time.Time) {
 // WithEndDateCreated sets the DateCreated field of the QueryFilter value.
 func (qf *QueryFilter) WithEndDateCreated(endDate time.Time) {
 	d := endDate.UTC()
-	qf.EndCreateDate = &d
+	qf.EndCreatedDate = &d
 }
